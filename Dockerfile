@@ -14,3 +14,7 @@ RUN mkdir -p /var/www/html/data \
     && chown -R www-data:www-data /var/www/html/data
 
 EXPOSE 80
+
+# Railway injects PORT at runtime. Reconfigure Apache before startup so the
+# container listens on the same port used by Railway's health checker.
+CMD ["sh", "-c", "sed -ri \"s/^Listen [0-9]+$/Listen ${PORT:-80}/\" /etc/apache2/ports.conf && sed -ri \"s/<VirtualHost \\*:[0-9]+>/<VirtualHost *:${PORT:-80}>/\" /etc/apache2/sites-available/000-default.conf && exec apache2-foreground"]
