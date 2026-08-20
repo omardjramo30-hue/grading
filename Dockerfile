@@ -2,10 +2,12 @@ FROM php:8.3-apache
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libsqlite3-dev \
-    && rm -rf /var/lib/apt/lists/* \
     && docker-php-ext-install pdo_mysql pdo_sqlite \
-    && a2enmod rewrite headers \
-    && sed -ri 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
+    && a2dismod --force mpm_event mpm_worker \
+    && a2enmod mpm_prefork rewrite headers \
+    && sed -ri 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf \
+    && apache2ctl configtest \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
 COPY . /var/www/html
