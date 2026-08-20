@@ -1,119 +1,64 @@
-<?php    
-    include('config.php');
-    if(isset($_POST['submit'])){
-        $user = $_POST['user'];
-        $pass = sha1($_POST['pass']);
-        $query = "select * from userdata where username='$user' and password='$pass'";
-        $r = mysql_query($query);
-        if(mysql_num_rows($r) == 1){
-            $row = mysql_fetch_assoc($r);
-            $_SESSION['level'] = $row['level'];
-            $_SESSION['id'] = $row['username'];
-            $_SESSION['name'] = $row['fname'].' '.$row['lname'];
-            header('location:'.$row['level'].'');
-        }else{
-            header('location:index.php?login=0');
-        }
-    }
+<?php
 
-    if(isset($_SESSION['level'])){
-        header('location:'.$_SESSION['level'].'');   
+declare(strict_types=1);
+
+require __DIR__ . '/bootstrap.php';
+
+if (current_user() !== null) {
+    redirect(current_user()['must_change_password'] ? 'profile.php' : 'dashboard.php');
+}
+
+$error = null;
+if (request_is_post()) {
+    verify_csrf();
+    $username = input('username');
+    $password = (string) ($_POST['password'] ?? '');
+
+    if ($username === '' || $password === '') {
+        $error = 'Enter both your username and password.';
+    } elseif (attempt_login($username, $password)) {
+        redirect('dashboard.php');
+    } else {
+        $error = login_is_rate_limited($username)
+            ? 'Too many failed attempts. Try again in 15 minutes.'
+            : 'The username or password is incorrect.';
     }
+}
+
+$page_title = 'Sign in';
+require __DIR__ . '/partials/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="icon" href="favicon.ico">
-
-    <title>Online Grading System</title>
-
-    <!-- Bootstrap core CSS -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/font-awesome.min.css" />
-    <link rel="stylesheet" href="css/style.css" />
-    <!-- Custom styles for this template -->
-    <link href="jumbotron.css" rel="stylesheet">
-
-  </head>
-
-  <body>
-
-    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="index.php">Online Grading System</a>
+<section class="auth-card">
+    <div class="auth-intro">
+        <div>
+            <span class="brand-mark">AG</span>
+            <h1>One reliable record for every result.</h1>
+            <p>Manage courses, assessments and student performance with clear role-based access.</p>
         </div>
-        <div id="navbar" class="navbar-collapse collapse">
-          <form class="navbar-form navbar-right" role="form" action="index.php" method="POST">
-            <div class="form-group">
-                <?php if(isset($_GET['login'])): ?>
-                    <label class="text-danger">Invalid Username/Password</label>&nbsp;
-                <?php endif; ?>
-            </div>
-            <div class="form-group">
-              <input type="text" placeholder="ID No." class="form-control" name="user">
-            </div>
-            <div class="form-group">
-              <input type="password" placeholder="Password" class="form-control" name="pass">
-            </div>
-            <button type="submit" class="btn btn-success" name="submit">Sign in</button>
-          </form>
-        </div><!--/.navbar-collapse -->
-      </div>
-    </nav>
-
-    <!-- Main jumbotron for a primary marketing message or call to action -->
-    <div class="jumbotron">
-      <div class="container">
-        <h1>Hello, world!</h1>
-        <p>This is a template for a simple marketing or informational website. It includes a large callout called a jumbotron and three supporting pieces of content. Use it as a starting point to create something more unique.</p>
-        <p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more &raquo;</a></p>
-      </div>
+        <ul class="auth-benefits">
+            <li>Secure access for administrators, teachers and students</li>
+            <li>Weighted grade calculation and GPA reporting</li>
+            <li>Complete audit trail for academic changes</li>
+        </ul>
     </div>
-
-    <div class="container">
-      <!-- Example row of columns -->
-      <div class="row">
-        <div class="col-md-4">
-          <h2 class="center"><i class="fa fa-users fa-5x"></i></h2>
-          <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-          <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
-        </div>
-        <div class="col-md-4">
-          <h2 class="center"><i class="fa fa-table fa-5x"></i></h2>
-          <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-          <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
-       </div>
-        <div class="col-md-4">
-          <h2 class="center"><i class="fa fa-tasks fa-5x"></i></h2>
-          <p>Donec sed odio dui. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vestibulum id ligula porta felis euismod semper. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
-          <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
-        </div>
-      </div>
-
-      <hr>
-
-      <footer>
-        <p>&copy; Company 2014</p>
-      </footer>
-    </div> <!-- /container -->
-
-
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="js/jquery.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-  </body>
-</html>
+    <div class="auth-form">
+        <h2>Welcome back</h2>
+        <p>Sign in with your assigned academic account.</p>
+        <?php if ($error !== null): ?>
+            <div class="alert alert-danger" role="alert"><?= e($error) ?></div>
+        <?php endif; ?>
+        <form method="post" action="<?= e(app_path('index.php')) ?>">
+            <?= csrf_field() ?>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input id="username" name="username" type="text" autocomplete="username" maxlength="80" required autofocus value="<?= e($_POST['username'] ?? '') ?>">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required>
+            </div>
+            <button class="button" type="submit">Sign in</button>
+        </form>
+    </div>
+</section>
+<?php require __DIR__ . '/partials/footer.php'; ?>
