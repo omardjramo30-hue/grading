@@ -1,0 +1,30 @@
+name: PHP checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_sqlite
+      - name: Lint PHP files
+        run: find . -name '*.php' -not -path './data/*' -print0 | xargs -0 -n1 php -l
+      - name: Grade calculation tests
+        run: php tests/grade_calculation_test.php
+      - name: Security static checks
+        run: php tests/security_static_test.php
+      - name: Application boot smoke test
+        env:
+          APP_ENV: testing
+          DB_DSN: sqlite:/tmp/grading-test.sqlite
+          ADMIN_PASSWORD: TestingPassword123
+        run: php -r 'require "bootstrap.php"; if (!db()->fetch("SELECT id FROM users WHERE role = :role", ["role" => "admin"])) { exit(1); } echo "Boot test passed.\n";'
