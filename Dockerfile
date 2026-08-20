@@ -17,6 +17,6 @@ RUN mkdir -p /var/www/html/data \
 
 EXPOSE 80
 
-# Railway injects PORT at runtime. Reconfigure Apache before startup so the
-# container listens on the same port used by Railway's health checker.
-CMD ["sh", "-c", "sed -ri \"s/^Listen [0-9]+$/Listen ${PORT:-80}/\" /etc/apache2/ports.conf && sed -ri \"s/<VirtualHost \\*:[0-9]+>/<VirtualHost *:${PORT:-80}>/\" /etc/apache2/sites-available/000-default.conf && exec apache2-foreground"]
+# Railway injects PORT at runtime. Reassert a single PHP-compatible Apache MPM
+# immediately before startup, then bind Apache to Railway's runtime port.
+CMD ["sh", "-c", "rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf && a2enmod mpm_prefork >/dev/null && sed -ri \"s/^Listen [0-9]+$/Listen ${PORT:-80}/\" /etc/apache2/ports.conf && sed -ri \"s/<VirtualHost \\*:[0-9]+>/<VirtualHost *:${PORT:-80}>/\" /etc/apache2/sites-available/000-default.conf && apache2ctl configtest && exec apache2-foreground"]
