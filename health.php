@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/bootstrap.php';
-
 header('Content-Type: application/json; charset=UTF-8');
+header('Cache-Control: no-store');
+http_response_code(200);
+
 echo json_encode([
     'status' => 'ok',
-    'application' => config('app')['name'],
-    'time' => now(),
+    'time' => gmdate(DATE_ATOM),
 ], JSON_THROW_ON_ERROR);
